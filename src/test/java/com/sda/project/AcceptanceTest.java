@@ -1,82 +1,54 @@
 package com.sda.project;
 
-import com.sda.project.model.Privilege;
-import com.sda.project.model.PrivilegeType;
-import com.sda.project.model.Project;
-import com.sda.project.model.Role;
-import com.sda.project.model.RoleType;
-import com.sda.project.model.User;
-import com.sda.project.service.PrivilegeService;
-import com.sda.project.service.ProjectService;
-import com.sda.project.service.RoleService;
-import com.sda.project.service.UserService;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
 class AcceptanceTest {
 
-    @Autowired
-    PrivilegeService privilegeService;
-
-    @Autowired
-    RoleService roleService;
-
-    @Autowired
-    UserService userService;
-
-    @Autowired
-    ProjectService projectService;
+    private static final int MONTHS_IN_YEAR = 12;
+    private static final int PERCENT = 100;
 
     @Test
-    void acceptanceFlow() {
-        // create privileges
-        Privilege writePrivilege = privilegeService.save(PrivilegeType.WRITE_PRIVILEGE);
-        Privilege readPrivilege = privilegeService.save(PrivilegeType.READ_PRIVILEGE);
+    void givenInput_shouldCalculateMortgage() {
+        int principal = 105_000;
+        double annualInterest = 4.25D;
+        int years = 25;
+        int downPayment = 16_000;
 
-        // create roles
-        Role adminRole = roleService.save(RoleType.ADMIN, Set.of(writePrivilege));
+        double mortgage = calculateMortgage(principal, annualInterest, years, downPayment);
 
-        Role userRole = roleService.save(RoleType.USER, Set.of(readPrivilege));
-
-        // create users
-        User projectLead = createAdmin(adminRole);
-        User user = createUser(userRole);
-        userService.save(projectLead);
-        userService.save(user);
-
-        // create project
-        Project project = createProject();
-        Project savedProject = projectService.save(project);
-
-        assertThat(savedProject).isNotNull();
+        assertThat(mortgage).isEqualTo(480);
     }
 
-    private User createAdmin(Role role) {
-        User user = new User();
-        user.setEmail("test-admin@gmail.com");
-        user.setPassword("pass");
-        user.addRole(role);
-        return user;
+    // TODO: move to mortgage service
+    private double calculateMortgage(
+            int principal,
+            double annualInterestRate,
+            int years,
+            int downPayment) {
+
+        double monthlyInterestRate = annualInterestRate / PERCENT / MONTHS_IN_YEAR;
+        int numberOfPayments = years * MONTHS_IN_YEAR;
+
+        double mortgage = principal
+                * (monthlyInterestRate * Math.pow(1 + monthlyInterestRate, numberOfPayments))
+                / (Math.pow(1 + monthlyInterestRate, numberOfPayments) - 1);
+        return mortgage;
     }
 
-    private User createUser(Role role) {
-        User user = new User();
-        user.setEmail("test-user@gmail.com");
-        user.setPassword("pass");
-        user.addRole(role);
-        return user;
-    }
+    private double calculateBalance(
+            int principal,
+            double annualInterest,
+            int years,
+            int numberOfPaymentsMade) {
 
-    private Project createProject() {
-        Project project = new Project();
-        project.setName("project");
-        project.setProjectKey("PRO");
-        return project;
+        double monthlyInterest = annualInterest / PERCENT / MONTHS_IN_YEAR;
+        int numberOfPayments = (short) (years * MONTHS_IN_YEAR);
+
+        double balance = principal
+                * (Math.pow(1 + monthlyInterest, numberOfPayments) - Math.pow(1 + monthlyInterest, numberOfPaymentsMade))
+                / (Math.pow(1 + monthlyInterest, numberOfPayments) - 1);
+        return balance;
     }
 }

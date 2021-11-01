@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-public class UserService<PasswordEncoder> implements UserDetailsService {
+public class UserService implements UserDetailsService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
@@ -52,19 +52,6 @@ public class UserService<PasswordEncoder> implements UserDetailsService {
                 .orElseGet(() -> saveUser(user));
     }
 
-    public List<User> findAll() {
-        log.info("find users");
-
-        return userRepository.findAll();
-    }
-
-    public User findByEmail(String email) {
-        log.info("find user by email {}", email);
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException(email + " not found"));
-    }
-
     @Transactional
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -74,52 +61,6 @@ public class UserService<PasswordEncoder> implements UserDetailsService {
                     return new UserPrincipal(user, roles);
                 })
                 .orElseThrow(() -> new UsernameNotFoundException(email + " not found"));
-    }
-
-    public User findById(long id) {
-        log.info("find user {}", id);
-
-        return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("not found"));
-    }
-
-    public void update(User user) {
-        log.info("update user {}", user);
-
-        userRepository.save(user);
-    }
-
-    public void enable(Long id) {
-        log.info("enable user {}", id);
-
-        userRepository.findById(id)
-                .map(foundUser -> {
-                    foundUser.setEnabled(true);
-                    return userRepository.save(foundUser);
-                })
-                .orElseThrow(() -> new ResourceNotFoundException("user not found"));
-    }
-
-    public void disable(Long id) {
-        log.info("disable user {}", id);
-
-        Role adminRole = roleRepository.findByType(RoleType.ADMIN)
-                .orElseThrow(() -> new ResourceNotFoundException("role not found"));
-        long enabledAdminsCount = userRepository.findAll().stream()
-                .filter(user -> user.isEnabled())
-                .filter(user -> user.getRoles().contains(adminRole))
-                .count();
-        if (enabledAdminsCount > 1) {
-            userRepository.findById(id)
-                    .map(foundUser -> {
-                        foundUser.setEnabled(false);
-                        return userRepository.save(foundUser);
-                    })
-                    .orElseThrow(() -> new ResourceNotFoundException("user not found"));
-
-        } else {
-            throw new RuntimeException("can't disable last admin");
-        }
     }
 
     private User saveUser(User user) {

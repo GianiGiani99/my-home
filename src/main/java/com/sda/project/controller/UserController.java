@@ -10,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @Controller
@@ -27,17 +26,12 @@ public class UserController {
 
     // register
 
-    // get page
     @GetMapping("/register")
     public String showRegisterPage(Model model) {
-        // "userDto" will be used in html
-        // userDto object represents the java instance
         model.addAttribute("user", new User());
-        // folder / page name
         return "user/register";
     }
 
-    // action
     @PostMapping("/register")
     public String add(Model model, @ModelAttribute User user) {
         try {
@@ -61,54 +55,5 @@ public class UserController {
     public String loginError(Model model) {
         model.addAttribute("loginError", true);
         return "user/login";
-    }
-
-    // crud
-
-    @GetMapping("/users")
-    public String showUsersPage(Model model) {
-        model.addAttribute("users", userService.findAll());
-        return "user/users";
-    }
-
-    @GetMapping("/users/{id}/edit")
-    public String showEditForm(Model model, @PathVariable Long id) {
-        User user = userService.findById(id);
-        model.addAttribute("user", user);
-        return "user/edit-user";
-    }
-
-    @PostMapping("/users/{id}/edit")
-    public String edit(@ModelAttribute User user) {
-        userService.update(user);
-        return "redirect:/users";
-    }
-
-    @GetMapping("/users/{id}/enable")
-    public String enable(Model model, @PathVariable Long id) {
-        try {
-            userService.enable(id);
-            return "redirect:/users";
-        } catch (RuntimeException e) {
-            String errorMessage = e.getMessage();
-            log.error(errorMessage);
-            model.addAttribute("errorMessage", errorMessage);
-            model.addAttribute("users", userService.findAll());
-            return "user/users";
-        }
-    }
-
-    @GetMapping("/users/{id}/disable")
-    public String disable(Model model, @PathVariable Long id) {
-        try {
-            userService.disable(id);
-            return "redirect:/users";
-        } catch (RuntimeException e) {
-            String errorMessage = e.getMessage();
-            log.error(errorMessage);
-            model.addAttribute("errorMessage", errorMessage);
-            model.addAttribute("users", userService.findAll());
-            return "user/users";
-        }
     }
 }
