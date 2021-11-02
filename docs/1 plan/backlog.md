@@ -7,7 +7,7 @@
 
 # 3. create epics
 - register
-- calculator
+- manage calculations
 
 # 4. create backlog
 
